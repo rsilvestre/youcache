@@ -2,8 +2,6 @@ defmodule YouCache.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/rsilvestre/youcache"
-  @homepage_url "https://github.com/rsilvestre/youcache"
 
   def project do
     [
