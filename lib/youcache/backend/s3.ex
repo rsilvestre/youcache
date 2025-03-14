@@ -116,29 +116,41 @@ defmodule YouCache.Backend.S3 do
   @impl true
   def clear(state) do
     # List all objects with the prefix
-    case ExAws.S3.list_objects(state.bucket, prefix: state.prefix)
-         |> ExAws.request(region: state.region) do
-      {:ok, %{body: %{contents: contents}}} ->
-        # Delete all objects
-        objects = Enum.map(contents, fn %{key: key} -> key end)
+    case list_objects(state) do
+      {:ok, []} ->
+        # No objects to delete
+        :ok
         
-        case objects do
-          [] ->
-            # No objects to delete
-            :ok
-            
-          _ ->
-            # Delete objects
-            ExAws.S3.delete_multiple_objects(state.bucket, objects)
-            |> ExAws.request(region: state.region)
-            |> case do
-              {:ok, _} -> :ok
-              {:error, error} -> {:error, error}
-            end
-        end
+      {:ok, objects} ->
+        # Delete objects
+        delete_objects(state, objects)
         
       {:error, error} ->
         {:error, error}
+    end
+  end
+  
+  # Helper to list objects with prefix
+  defp list_objects(state) do
+    case ExAws.S3.list_objects(state.bucket, prefix: state.prefix)
+         |> ExAws.request(region: state.region) do
+      {:ok, %{body: %{contents: contents}}} ->
+        objects = Enum.map(contents, fn %{key: key} -> key end)
+        {:ok, objects}
+        
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+  
+  # Helper to delete multiple objects
+  defp delete_objects(_state, []), do: :ok
+  defp delete_objects(state, objects) do
+    ExAws.S3.delete_multiple_objects(state.bucket, objects)
+    |> ExAws.request(region: state.region)
+    |> case do
+      {:ok, _} -> :ok
+      {:error, error} -> {:error, error}
     end
   end
   
@@ -147,40 +159,60 @@ defmodule YouCache.Backend.S3 do
     now = System.os_time(:second)
     
     # List all objects with the prefix
-    case ExAws.S3.list_objects(state.bucket, prefix: state.prefix)
-         |> ExAws.request(region: state.region) do
-      {:ok, %{body: %{contents: contents}}} ->
-        # Process each object
-        Enum.each(contents, fn %{key: key} ->
-          # Get object metadata
-          case ExAws.S3.head_object(state.bucket, key)
-               |> ExAws.request(region: state.region) do
-            {:ok, %{headers: headers}} ->
-              # Parse expiration from metadata
-              expires_at =
-                headers
-                |> Enum.find(fn {k, _v} -> String.downcase(k) == "x-amz-meta-expires-at" end)
-                |> case do
-                  {_, expires_str} -> String.to_integer(expires_str)
-                  nil -> 0  # No expiration
-                end
-              
-              # Delete if expired
-              if expires_at > 0 and expires_at < now do
-                ExAws.S3.delete_object(state.bucket, key)
-                |> ExAws.request(region: state.region)
-              end
-              
-            _ ->
-              # Ignore errors
-              :ok
-          end
-        end)
-        
+    case list_objects(state) do
+      {:ok, objects} ->
+        # Delete expired objects
+        delete_expired_objects(state, objects, now)
         :ok
         
       {:error, error} ->
         {:error, error}
+    end
+  end
+  
+  # Helper to delete expired objects
+  defp delete_expired_objects(state, objects, now) do
+    Enum.each(objects, fn key -> 
+      check_and_delete_if_expired(state, key, now)
+    end)
+  end
+  
+  # Check object expiration and delete if needed
+  defp check_and_delete_if_expired(state, key, now) do
+    case get_object_expiry(state, key) do
+      {:ok, expires_at} when expires_at > 0 and expires_at < now ->
+        delete_object(state, key)
+      _ ->
+        :ok
+    end
+  end
+  
+  # Get object expiration time
+  defp get_object_expiry(state, key) do
+    case ExAws.S3.head_object(state.bucket, key)
+         |> ExAws.request(region: state.region) do
+      {:ok, %{headers: headers}} ->
+        expires_at =
+          headers
+          |> Enum.find(fn {k, _v} -> String.downcase(k) == "x-amz-meta-expires-at" end)
+          |> case do
+            {_, expires_str} -> String.to_integer(expires_str)
+            nil -> 0  # No expiration
+          end
+        {:ok, expires_at}
+        
+      _ ->
+        {:error, :not_found}
+    end
+  end
+  
+  # Delete a single object
+  defp delete_object(state, key) do
+    ExAws.S3.delete_object(state.bucket, key)
+    |> ExAws.request(region: state.region)
+    |> case do
+      {:ok, _} -> :ok
+      _ -> :error
     end
   end
   

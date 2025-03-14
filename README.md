@@ -1,5 +1,8 @@
 # YouCache
 
+[![Elixir CI](https://github.com/yourusername/youcache/actions/workflows/elixir.yml/badge.svg)](https://github.com/yourusername/youcache/actions/workflows/elixir.yml)
+[![Coverage Status](https://coveralls.io/repos/github/yourusername/youcache/badge.svg?branch=main)](https://coveralls.io/github/yourusername/youcache?branch=main)
+
 A flexible caching library for Elixir applications with multiple backend options:
 
 - Memory (ETS)

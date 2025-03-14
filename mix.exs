@@ -67,7 +67,9 @@ defmodule YouCache.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"]
+      extras: ["README.md", "MIGRATION.md"],
+      source_url: "https://github.com/yourusername/youcache",
+      source_ref: "main"
     ]
   end
 
@@ -75,7 +77,8 @@ defmodule YouCache.MixProject do
     [
       files: ~w(lib .formatter.exs mix.exs README*),
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/yourusername/youcache"}
+      links: %{"GitHub" => "https://github.com/yourusername/youcache"},
+      source_url: "https://github.com/yourusername/youcache"
     ]
   end
 end

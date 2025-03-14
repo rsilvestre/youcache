@@ -15,23 +15,25 @@ defmodule YouCache.Backend.Disk do
     cache_dir = Keyword.get(options, :cache_dir, @default_cache_dir)
     
     # Create cache directory if it doesn't exist
-    with :ok <- create_cache_dir(cache_dir) do
-      # Table file path
-      table_file = Path.join(cache_dir, "#{registry}_cache.dets")
-      
-      # Create DETS table
-      case :dets.open_file(String.to_atom("#{registry}_cache"), [
-        file: String.to_charlist(table_file),
-        type: :set
-      ]) do
-        {:ok, table} ->
-          {:ok, %{table: table, table_file: table_file}}
-          
-        {:error, reason} ->
-          {:error, {:dets_error, reason}}
-      end
-    else
-      {:error, reason} -> {:error, {:directory_error, reason}}
+    case create_cache_dir(cache_dir) do
+      :ok ->
+        # Table file path
+        table_file = Path.join(cache_dir, "#{registry}_cache.dets")
+        
+        # Create DETS table
+        case :dets.open_file(String.to_atom("#{registry}_cache"), [
+          file: String.to_charlist(table_file),
+          type: :set
+        ]) do
+          {:ok, table} ->
+            {:ok, %{table: table, table_file: table_file}}
+            
+          {:error, reason} ->
+            {:error, {:dets_error, reason}}
+        end
+        
+      {:error, reason} -> 
+        {:error, {:directory_error, reason}}
     end
   end
   
