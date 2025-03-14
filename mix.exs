@@ -2,14 +2,16 @@ defmodule YouCache.MixProject do
   use Mix.Project
 
   @version "0.1.0"
+  @source_url "https://github.com/rsilvestre/youcache"
+  @homepage_url "https://github.com/rsilvestre/youcache"
 
   def project do
     [
       app: :youcache,
       version: @version,
       name: "YouCache",
-      description: "A caching library for Elixir applications",
-      elixir: "~> 1.15",
+      description: "A flexible caching library for Elixir applications with multiple backend options",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
@@ -25,7 +27,9 @@ defmodule YouCache.MixProject do
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
-        "coveralls.html": :test
+        "coveralls.html": :test,
+        "coveralls.github": :test,
+        test: :test
       ]
     ]
   end
@@ -68,7 +72,7 @@ defmodule YouCache.MixProject do
     [
       main: "readme",
       extras: ["README.md", "MIGRATION.md"],
-      source_url: "https://github.com/yourusername/youcache",
+      source_url: "https://github.com/rsilvestre/youcache",
       source_ref: "main"
     ]
   end
@@ -77,8 +81,8 @@ defmodule YouCache.MixProject do
     [
       files: ~w(lib .formatter.exs mix.exs README*),
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/yourusername/youcache"},
-      source_url: "https://github.com/yourusername/youcache"
+      links: %{"GitHub" => "https://github.com/rsilvestre/youcache"},
+      source_url: "https://github.com/rsilvestre/youcache"
     ]
   end
 end
