@@ -1,0 +1,11 @@
+_build/
+deps/
+.elixir_ls/
+*.beam
+*.o
+tmp/
+*.ez
+dist/
+.DS_Store
+*.swp
+*.swo
